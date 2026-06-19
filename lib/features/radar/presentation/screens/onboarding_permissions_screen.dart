@@ -3,11 +3,50 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 
-class OnboardingPermissionsScreen extends ConsumerWidget {
+class OnboardingPermissionsScreen extends ConsumerStatefulWidget {
   const OnboardingPermissionsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<OnboardingPermissionsScreen> createState() => _OnboardingPermissionsScreenState();
+}
+
+class _OnboardingPermissionsScreenState extends ConsumerState<OnboardingPermissionsScreen> {
+  bool _isLoading = false;
+
+  Future<void> _handlePermissionRequest() async {
+    setState(() => _isLoading = true);
+
+    try {
+      LocationPermission permission = await Geolocator.requestPermission();
+
+      if (!mounted) return;
+
+      if (permission == LocationPermission.whileInUse ||
+          permission == LocationPermission.always) {
+        context.go('/radar');
+      } else if (permission == LocationPermission.deniedForever) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enable location in settings to use the radar.')),
+        );
+        await Geolocator.openAppSettings();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error requesting permission: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -15,7 +54,12 @@ class OnboardingPermissionsScreen extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.location_on, size: 80, color: Colors.blue),
+              Icon(
+                Icons.location_on,
+                size: 80,
+                color: theme.colorScheme.primary,
+                semanticLabel: 'Location access illustration',
+              ),
               const SizedBox(height: 32),
               const Text(
                 'Explore your neighborhood',
@@ -30,26 +74,22 @@ class OnboardingPermissionsScreen extends ConsumerWidget {
               ),
               const Spacer(),
               ElevatedButton(
-                onPressed: () async {
-                  LocationPermission permission = await Geolocator.requestPermission();
-                  if (permission == LocationPermission.whileInUse ||
-                      permission == LocationPermission.always) {
-                    if (context.mounted) context.go('/radar');
-                  } else if (permission == LocationPermission.deniedForever) {
-                     if (context.mounted) {
-                       ScaffoldMessenger.of(context).showSnackBar(
-                         const SnackBar(content: Text('Please enable location in settings to use the radar.')),
-                       );
-                       await Geolocator.openAppSettings();
-                     }
-                  }
-                },
+                onPressed: _isLoading ? null : _handlePermissionRequest,
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size.fromHeight(56),
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
                 ),
-                child: const Text('Enable Location Access'),
+                child: _isLoading
+                    ? SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: theme.colorScheme.onPrimary,
+                        ),
+                      )
+                    : const Text('Enable Location Access'),
               ),
               TextButton(
                 onPressed: () => context.go('/auth'),

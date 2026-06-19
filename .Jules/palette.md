@@ -1,0 +1,3 @@
+## 2025-05-22 - [Onboarding Permission UX & Accessibility]
+**Learning:** Permission requests in Flutter can cause a "dead" moment between button tap and OS dialog. Immediate visual feedback (loading state) reduces user anxiety and prevents duplicate triggers. Using semantic labels on illustrative icons ensures the onboarding context is communicated to screen reader users.
+**Action:** Always wrap permission-related buttons in a loading state and ensure primary illustrative icons have descriptive `semanticLabel` properties. Ensure theme consistency by avoiding hardcoded colors in feature-specific screens.
