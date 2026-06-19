@@ -26,6 +26,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
   Widget build(BuildContext context) {
     final positionAsync = ref.watch(positionStreamProvider);
     final nearbyUsersAsync = ref.watch(nearbyUsersStreamProvider);
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -47,7 +48,10 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
               left: 20,
               child: Container(
                 padding: const EdgeInsets.all(8),
-                color: Colors.black54,
+                decoration: BoxDecoration(
+                  color: Colors.black.withAlpha(138), // ~0.54 opacity
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 child: Text('Lat: ${pos.latitude.toStringAsFixed(4)}, Lon: ${pos.longitude.toStringAsFixed(4)}'),
               ),
             ),
@@ -62,7 +66,8 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
                 top: 100,
                 right: 20,
                 child: CircleAvatar(
-                  backgroundColor: Colors.blue,
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
                   child: Text('${users.length}'),
                 ),
               );
@@ -85,7 +90,7 @@ class _RadarScreenState extends ConsumerState<RadarScreen> {
         PointAnnotationOptions(
           geometry: Point(coordinates: Position(user.longitude, user.latitude)),
           textField: user.vibeIntent,
-          textColor: Colors.cyan.value.toInt(),
+          textColor: Colors.cyan.toARGB32(),
           iconImage: "marker-15", // Default mapbox marker
         ),
       );
